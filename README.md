@@ -1,8 +1,8 @@
 # Podric's AutoRoll Assistant
 
-Configurable automatic loot rolls for selected items. Unlisted items remain manual. Use `/par` to open settings.
+Configurable automatic loot rolls for selected items. Unlisted items remain manual. Open Options → AddOns → Podric AutoRoll, or use `/par`.
 
-- Current version: 0.1.0
+- Current version: 0.1.1-beta
 - Game: World of Warcraft: Forever
 - Addon folder: `PodricAutoRoll`
 
