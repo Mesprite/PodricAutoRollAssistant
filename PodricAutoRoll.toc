@@ -1,0 +1,7 @@
+## Interface: 16001
+## Title: Podric AutoRoll
+## Notes: Tiny configurable loot-roll whitelist for WoW Forever.
+## Author: Podric
+## Version: 0.1.0
+## SavedVariables: PodricAutoRollDB
+PodricAutoRoll.lua
