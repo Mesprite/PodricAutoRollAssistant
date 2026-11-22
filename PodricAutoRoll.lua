@@ -21,6 +21,8 @@ local colors={Manual='aaaaaa',Greed='ffd15a',Need='76dc85',Pass='ff8585'}
 local presetByID={}
 for _,p in ipairs(presets) do for _,id in ipairs(p.ids) do presetByID[id]=p end end
 local db, panel, refresh
+local settingsCategory, legacySettings
+local settingsName = "Podric AutoRoll"
 local active={}
 local warned=false
 local function say(s)
@@ -108,15 +110,22 @@ local function check(parent,text,key,x,y)
     c:SetChecked(db[key]); c:SetScript('OnClick',function(self) db[key]=not not self:GetChecked() end)
     return c
 end
-local function createPanel()
-    panel=CreateFrame('Frame','PodricAutoRollPanel',UIParent,'BackdropTemplate')
-    panel:SetSize(510,565); panel:SetPoint('CENTER'); panel:SetFrameStrata('DIALOG'); panel:SetClampedToScreen(true)
-    panel:SetBackdrop({bgFile='Interface\\DialogFrame\\UI-DialogBox-Background',edgeFile='Interface\\DialogFrame\\UI-DialogBox-Border',tile=true,tileSize=32,edgeSize=24,insets={left=5,right=5,top=5,bottom=5}})
-    panel:EnableMouse(true); panel:SetMovable(true); panel:RegisterForDrag('LeftButton')
-    panel:SetScript('OnDragStart',panel.StartMoving); panel:SetScript('OnDragStop',panel.StopMovingOrSizing)
-    local close=CreateFrame('Button',nil,panel,'UIPanelCloseButton'); close:SetPoint('TOPRIGHT',-5,-5)
-    tinsert(UISpecialFrames,'PodricAutoRollPanel')
-    local title=label(panel,'Podric AutoRoll  |cffaaaaaav0.1.0|r','GameFontNormalLarge'); title:SetPoint('TOPLEFT',20,-18)
+local function createPanel(embedded)
+    if embedded then
+        panel=CreateFrame('Frame','PodricAutoRollPanel')
+        panel.name=settingsName
+        panel:Hide()
+        panel:SetSize(510,565)
+    else
+        panel=CreateFrame('Frame','PodricAutoRollPanel',UIParent,'BackdropTemplate')
+        panel:SetSize(510,565); panel:SetPoint('CENTER'); panel:SetFrameStrata('DIALOG'); panel:SetClampedToScreen(true)
+        panel:SetBackdrop({bgFile='Interface\\DialogFrame\\UI-DialogBox-Background',edgeFile='Interface\\DialogFrame\\UI-DialogBox-Border',tile=true,tileSize=32,edgeSize=24,insets={left=5,right=5,top=5,bottom=5}})
+        panel:EnableMouse(true); panel:SetMovable(true); panel:RegisterForDrag('LeftButton')
+        panel:SetScript('OnDragStart',panel.StartMoving); panel:SetScript('OnDragStop',panel.StopMovingOrSizing)
+        local close=CreateFrame('Button',nil,panel,'UIPanelCloseButton'); close:SetPoint('TOPRIGHT',-5,-5)
+        tinsert(UISpecialFrames,'PodricAutoRollPanel')
+    end
+    local title=label(panel,'Podric AutoRoll  |cffaaaaaav0.1.1-beta|r','GameFontNormalLarge'); title:SetPoint('TOPLEFT',20,-18)
     local enabled=check(panel,'Enable automatic rolls','enabled',17,-43)
     local confirm=check(panel,'Confirm binding on auto-rolls','confirm',17,-67)
     local chat=check(panel,'Chat notices','chat',310,-43)
@@ -171,25 +180,53 @@ local function createPanel()
         hooksecurefunc('ChatEdit_InsertLink',function(link) if panel:IsShown() and edit:HasFocus() and itemID(link) then edit:SetText(link) end end)
     end
     local footer=label(panel,'* Custom item rules override presets. X removes a custom rule.','GameFontHighlightSmall'); footer:SetPoint('BOTTOMLEFT',22,16)
-    panel:SetScript('OnShow',refresh); refresh()
+    panel:SetScript('OnShow',refresh)
+    panel:SetScript('OnHide',function() edit:ClearFocus() end)
+    refresh()
+end
+local function registerSettings()
+    if panel then return end
+    if Settings and type(Settings.RegisterCanvasLayoutCategory)=='function'
+       and type(Settings.RegisterAddOnCategory)=='function' and type(Settings.OpenToCategory)=='function' then
+        createPanel(true)
+        settingsCategory=Settings.RegisterCanvasLayoutCategory(panel,settingsName)
+        Settings.RegisterAddOnCategory(settingsCategory)
+    elseif type(InterfaceOptions_AddCategory)=='function' and type(InterfaceOptionsFrame_OpenToCategory)=='function' then
+        createPanel(true)
+        InterfaceOptions_AddCategory(panel)
+        legacySettings=true
+    end
 end
 local function slash(msg)
     if not db then return end
     msg=(msg or ''):lower():match('^%s*(.-)%s*$')
     if msg=='off' or msg=='on' then db.enabled=msg=='on'; if refresh then refresh() end; say(db.enabled and 'Enabled.' or 'Disabled.'); return end
-    if not panel then createPanel(); panel:Show() elseif panel:IsShown() then panel:Hide() else panel:Show() end
+    if not panel then registerSettings() end
+    if settingsCategory then
+        Settings.OpenToCategory(settingsCategory:GetID())
+    elseif legacySettings then
+        InterfaceOptionsFrame_OpenToCategory(panel)
+        InterfaceOptionsFrame_OpenToCategory(panel)
+    elseif not panel then createPanel(false); panel:Show()
+    elseif panel:IsShown() then panel:Hide() else panel:Show() end
 end
 SLASH_PODRICAUTOROLL1='/par'
 SLASH_PODRICAUTOROLL2='/podricautoroll'
 SlashCmdList.PODRICAUTOROLL=slash
 local f=CreateFrame('Frame')
 f:RegisterEvent('ADDON_LOADED')
+f:RegisterEvent('PLAYER_LOGIN')
 f:RegisterEvent('START_LOOT_ROLL')
 f:RegisterEvent('CONFIRM_LOOT_ROLL')
 f:RegisterEvent('CANCEL_LOOT_ROLL')
 f:RegisterEvent('CANCEL_ALL_LOOT_ROLLS')
 f:SetScript('OnEvent',function(_,event,a,b)
     if event=='ADDON_LOADED' then if a==addonName then init(); f:UnregisterEvent('ADDON_LOADED') end; return end
+    if event=='PLAYER_LOGIN' then
+        f:UnregisterEvent('PLAYER_LOGIN')
+        if db then registerSettings() end
+        return
+    end
     local ok,err=pcall(function()
         if event=='START_LOOT_ROLL' then handleRoll(a,b)
         elseif event=='CONFIRM_LOOT_ROLL' then handleConfirm(a,b)
