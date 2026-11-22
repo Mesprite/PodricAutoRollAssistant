@@ -1,0 +1,3 @@
+package-as: PodricAutoRoll
+ignore:
+  - README.md
