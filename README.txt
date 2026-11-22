@@ -1,8 +1,9 @@
-PODRIC AUTOROLL 0.1.0 | WoW Forever 1.60.1
+PODRIC AUTOROLL 0.1.1-beta | WoW Forever 1.60.1
 
 Install: fully exit WoW. Extract the PodricAutoRoll folder into
 World of Warcraft/_forever_/Interface/AddOns/ and start the game.
-Type /par to open/close settings. /par off and /par on toggle automation.
+Open Options > AddOns > Podric AutoRoll, or type /par to open settings.
+/par off and /par on toggle automation.
 
 Click the action next to any preset to cycle Manual, Greed, Need, Pass.
 Right-click reverses the cycle. Rules and checkboxes save account-wide.
@@ -26,3 +27,8 @@ Compatibility: Interface 16001, documented modern loot-roll APIs.
 Item IDs use the Classic baseline; verify new/changed Forever items in
 client and add custom overrides. Not yet tested in the live WoW client.
 No external libraries, periodic scanning, or combat log processing.
+
+Changes in v0.1.1-beta
+---------------------
+Added the full configuration panel to the game's AddOns options menu.
+Existing rules and saved variables are unchanged.
